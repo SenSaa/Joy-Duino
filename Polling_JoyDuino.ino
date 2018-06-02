@@ -9,11 +9,10 @@ int led = 11;
 const int threshold = 400;
 
 void setup() {
-    pinMode(selPin, INPUT);
+  pinMode(selPin, INPUT);
   digitalWrite(selPin, HIGH);
 
   Serial.begin(9600);
-
   Serial.println("!");
 
   pinMode(led, OUTPUT);
