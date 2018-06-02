@@ -5,14 +5,13 @@
 // GND                    -   Cathode (of LED - shorter LED Pin)
 // Pin 11 (PB7)           -   Anode (of LED - longer LED Pin)
 
-// x|=y ~ x = x | y ->  bitwise or and assignment.
-
+// Register set definitions and interrupt header.
 #include <avr/io.h>
 #include <avr/interrupt.h>
  
 int ledPin = 11; // Arduino Pin 11
-//int intPin = 7; // INT6
-//int intPin = 0; // INT2
+//int intPin = 7; // If you want to use INT6 instead of INT3 - uncomment this line and comment line 15.
+//int intPin = 0; // If you want to use INT2 instead of INT3 - uncomment this line and comment line 15.
 int intPin = 1; // INT3
 volatile int state = LOW;
 
@@ -22,41 +21,45 @@ void setup()
   Serial.println("!");
   
   DDRB = 0b10000000; // PB7 (led pin/pin 11)  = Output
-//pinMode(ledPin, OUTPUT); // Same as line above.
+  //pinMode(ledPin, OUTPUT); // Equivalent to above line, if using Arduino Library.
   
   PORTD = 0b00001000; // Set Interrupt (PD3/intPin/pin 1) as High.
-//digitalWrite(intPin, HIGH); // Equivalent to line above.
+  //digitalWrite(intPin, HIGH); // Equivalent to above line, if using Arduino Library.
 
   // Disble global interrupts
-  //cli();
+  //cli(); // Not needed - as interrupts are disabled in the ISR.
 
   // -----------------------------------------------------------------------------
   // External Interrupt Mask Register (EIMSK) - For Enabling External Interrupts
   // -----------------------------------------------------------------------------
-  EIMSK |= (1 << INT3);   // Enable INT3
-  //EIMSK |= _BV(INT3);   
-  //EIMSK |= 0x03;  
-  //EIMSK |= 0b00001000; 
+ // *** Check the Microchip Atmega datasheet's External Interrupt section on how to enable specific interrupt pins.
+  EIMSK |= (1 << INT3);   // Enable INT3.
+  //EIMSK |= _BV(INT3);   // Another way of enabling INT3.
+  //EIMSK |= 0x03;        // Another way of enabling INT3.
+  //EIMSK |= 0b00001000;  // Another way of enabling INT3.
   // -----------------------------------------------------------------------------
 
 
   // -----------------------------------------------------------------------------
-  // Interrupt Sense Control
+  // Interrupt Sense Control (ISC)
   // -----------------------------------------------------------------------------
+  // *** Check the Microchip Atmega datasheet's Interrupt section for ISC truth table, to select the "trigger state" of the ISR!
   
-  // Low logic level (0) - generates interrupt request.
-  //EICRA |= (0 << ISC30);
-  //EICRA |= (0 << ISC31);
-
-  // Any logic change (edge) - generates interrupt request.
-  //EICRA |= (1 << ISC30);    // set INT0 to trigger on ANY logic change
-
-  // Falling edge - generates interrupt request.
-  //EICRA |= (1 << ISC31);    // set INT0 to trigger on falling edge
-
   // Raising edge - generates interrupt request.
   EICRA |= (1 << ISC30); 
   EICRA |= (1 << ISC31);
+ 
+  // If you want Low logic level (0) - to generate interrupt request -> Then comment lines 47 & 48, and uncomment the following 2 lines.
+  //EICRA |= (0 << ISC30);
+  //EICRA |= (0 << ISC31);
+
+  // If you want any logic change (edge) - to generate interrupt request -> Then comment lines 47 & 48, and uncomment the following line.
+  //EICRA |= (1 << ISC30);    
+  //EICRA |= (0 << ISC31);    // Not needed, as ISC31 is 0 by default.
+
+  // If you want a falling edge - to generate interrupt request -> Then comment lines 47 & 48, and uncomment the following line.
+  //EICRA |= (1 << ISC31);    
+  //EICRA |= (0 << ISC30);    // Not needed, as the default value is 0.
   
   // -----------------------------------------------------------------------------
   // -----------------------------------------------------------------------------
@@ -65,7 +68,6 @@ void setup()
   sei(); 
 
   // Setting EIMSK, EICRX (as well as runnig sei()) - is the equivalent to using "attachInterrupt" as examples below.
-  //attachInterrupt(intPin, trigger, CHANGE); // Attaching the ISR to INT3
   //attachInterrupt(digitalPinToInterrupt(intPin), trigger, LOW);
   
 }
@@ -87,7 +89,7 @@ ISR (INT3_vect)
   
   int pin_7 = 7; 
   PORTB = (state << pin_7); // LED Pin is PB7!
-//digitalWrite(ledPin, state); // Equivalent to above.
+  //digitalWrite(ledPin, state); // Equivalent to above line, if using Arduino Library.
 
   Serial.println("Int fired!");
   Serial.println(state);
